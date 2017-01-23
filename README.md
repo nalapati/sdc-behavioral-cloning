@@ -20,7 +20,7 @@ The 3D convolutional layers in the model allow learning time series information 
 the depth dimension amounts to timesteps or camera images from previous points in time.
 
 The model architecture is as follows:
-![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/model.jpg)
+![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/model.jpg)
 
 Step 2: Training on the sample data provided
 The first step once the infrastructure was setup was to train the model on the sample data to determine if I could make
@@ -37,12 +37,17 @@ that solved the track 1 test set, but the model overfit(later fixed to add dropo
 would sway out after 2 laps, the data didn't have any correction samples. 
 
 Step 5: Collecting additional data
-This was largely manual, but required a suprisingly good discipline to manage these datasets, I added increments to
+This was largely manual, but surprisingly required a lot of discipline to manage these datasets, I added increments to
 a core dataset (each with its READMEs to track additions), My final dataset has the following composition:
 a. Track 1 to and fro 9 times.
+![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_18_12_56_26_395.jpg)
 b. Track 1 correction to and fro 9 times.
+![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_19_07_23_58_402.jpg)
+![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_19_07_23_59_149.jpg)
 c. Track 1 sharp turns to and fro 12 times.
+![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_19_09_40_52_539.jpg)
 d. Track 1 data on the bridge section.
+![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_19_09_40_46_616.jpg)
 
 The model that solves track 1 is in the repo:
 - 
