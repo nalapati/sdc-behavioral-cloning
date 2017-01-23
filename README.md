@@ -62,9 +62,9 @@ a core dataset (each with its READMEs to track additions), My final dataset has 
 
 ```
 # clone the repo
-# To install deps
-conda env create -f environment.yml
-source activate sdc-behavioral-cloning
-python drive.py model.json
+# If you don't already have deps run:
+# conda env create -f environment.yml
+# source activate sdc-behavioral-cloning
 # kick off the simulator and switch to autonomous + track 1
+python drive.py model.json
 ```
