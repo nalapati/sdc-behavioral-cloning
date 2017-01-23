@@ -15,7 +15,7 @@ d. Requires recovering from incorrect predictions to stay on the road and not go
 
 In view of the above, this solution implements a model that predicts the steering angle in radians given an input image
 from the center camera of a car. It is sufficient to go shallow and not use a lot of non-linearity by using just a few
-convolutional layers, but going wide by collecting a LOT of data and using a large number of filters in a single layer.
+convolutional layers, but going wide by collecting a LOT of data and using a large number of filters in a few layers.
 The 3D convolutional layers in the model allow learning time series information across different frames basically
 the depth dimension amounts to timesteps or camera images from previous points in time.
 
