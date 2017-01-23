@@ -3,7 +3,7 @@
 **NOTE: This project builds on work done in https://medium.com/udacity/teaching-a-machine-to-steer-a-car-d73217f2492c, specifically Ilya Edrenkin's approach of using a 3D Convolutional Neural Network.**
 
 ## Step 0: Infrastructure Setup
-As part of challenge 2 we got to a really good infrastructure setup on https://github.com/emef/sdc. This submission is a cut down version of the sdc project.
+As part of Udacity challenge 2 in the blog above we got to a really good infrastructure setup on https://github.com/emef/sdc. This submission is a cut down version of the sdc project.
 
 ## Step 1: Model design
 ### Requirements:
