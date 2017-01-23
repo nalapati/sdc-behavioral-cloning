@@ -19,7 +19,7 @@ The 3D convolutional layers in the model allow learning time series information 
 the depth dimension amounts to timesteps or camera images from previous points in time.
 
 ### The model architecture:
-**NOTE: only the lower half of the image is used in the model**
+**NOTE: only the lower half of the image is used in the model, and the input to the model is the current image and 9 previous images. Convolutions are done across time to extract temporal information in the driving data.**
 ![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/model.jpg)
 
 ## Step 2: Training on the sample data provided
@@ -40,23 +40,31 @@ would sway out after 2 laps, the data didn't have any correction samples.
 This was largely manual, but surprisingly required a lot of discipline to manage these datasets, I added increments to
 a core dataset (each with its READMEs to track additions), My final dataset has the following composition:
 * Track 1 to and fro 9 times.
+
 ![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_18_12_56_26_395.jpg)
 * Track 1 correction to and fro 9 times.
+
 ![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_19_07_23_58_402.jpg)
 
 ![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_19_07_23_59_149.jpg)
 * Track 1 sharp turns to and fro 12 times.
+
 ![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_19_09_40_52_539.jpg)
 * Track 1 data on the bridge section.
+
 ![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_19_09_40_46_616.jpg)
 
-The model that solves track 1 is in the repo: (model.json, model.h5)
-Dataset that solves track 1 can be downloaded at: (https://s3-us-west-1.amazonaws.com/sdc-datasets/dataset_track_1.zip) [Needs Permissions]
+## Results
+* The model that solves track 1 is in the repo: **(model.json, model.h5)**. Dataset that solves track 1 can be downloaded at: (https://s3-us-west-1.amazonaws.com/sdc-datasets/dataset_track_1.zip) [Needs Permissions]. The final model shows really good track recovery. 
+* I also solved Track 2 in isolation but haven't merged the two datasets yet to make a generalized model. The model that solves Track 2 is in the repo: **(track_2_model/model.json, track_2_model/model.h5)**. Dataset that solves track 2 can be downloaded at: (https://s3-us-west-1.amazonaws.com/sdc-datasets/dataset_track_2.zip) [Needs Permissions]. **NOTE: throttle in drive.py needs to be updated to 0.3 since the track has a lot of uphill sections.**
 
-The final model shows really good track recovery. 
+## Running the code.
 
-I also solved Track 2 in isolation but haven't merged the two datasets yet to make a generalized model. 
-The model that solves Track 2 is in the repo: (track_2_model/model.json, track_2_model/model.h5)
-**NOTE: throttle in drive.py needs to be updated to 0.3 since the track has a lot of uphill sections.**
-Dataset that solves track 2 can be downloaded at: (https://s3-us-west-1.amazonaws.com/sdc-datasets/dataset_track_2.zip) [Needs Permissions]
-
+```
+# clone the repo
+# To install deps
+conda env create -f environment.yml
+source activate sdc-behavioral-cloning
+python drive.py model.json
+# kick off the simulator and switch to autonomous + track 1
+```
