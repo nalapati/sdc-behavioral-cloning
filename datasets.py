@@ -1,3 +1,6 @@
+""" Contains utilities to load, generate datasets for use
+    in model training.
+"""
 import cv2
 import os
 import pandas
@@ -8,6 +11,29 @@ import numpy as np
 from scipy.stats.mstats import mquantiles
 
 class Dataset(object):
+    """Dataset is a wrapper around an on disk dataset of the form
+       dataset_1/
+         images/
+           1.jpg
+           2.jpg
+           ...
+           30000.jpg
+           ...
+         labels.npy
+         training_indexes.npy
+         validation_indexes.npy
+         testing_indexes.npy
+ 
+        Note: Use the prepare_dataset method in this package to convert 
+        a dataset of the form below to the form above.
+        dataset_1/ 
+          IMG/
+            center_...
+            left_...
+            right_...
+            ...
+          driving_log.csv
+    """
     def __init__(self, 
                  image_path, 
                  training_indexes,
@@ -180,6 +206,29 @@ class InfiniteImageLoadingGenerator(object):
         return self
 
     def __next__(self):
+        """ This method generates batches of data from 
+            training_indexes.npy, validation_indexes.npy, testing_indexes.npy
+            
+            for example:
+            Lets suppose
+            batch_size : 1
+            training_indexes : [100, 28, 32, 48, 56, 64, 73, 89...]
+                                 ^ 
+                                current_index
+           If timesteps are required:
+           This method will return (1, 10, 80, 320, 3) output, it basically
+           returns a numpy array containing images from 91-100.
+           else
+           This method will return (1, 80, 320, 3) output, it basically
+           returns a numpy array containing image number 100.
+
+           This method advances the current index and wraps around once the 
+           training_indexes array is exhausted.(training_indexes is shuffled
+           on wrap around).
+
+           NOTE: When image data is loaded it is normalized in the load_image
+                 method.
+        """
         labels = np.empty([self.batch_size] + self.label_shape)
         if self.timesteps:
             images = np.empty([self.batch_size, self.timesteps] + self.image_shape)
@@ -217,6 +266,31 @@ def prepare_dataset(
     training_percent,
     testing_percent,
     validation_percent):
+    """
+      FROM:
+      dataset_1/ 
+        IMG/
+          center_...
+          left_...
+          right_...
+          ...
+        driving_log.csv
+
+       TO:
+       dataset_1/
+         images/
+           1.jpg
+           2.jpg
+           ...
+           30000.jpg
+           ...
+         labels.npy
+         training_indexes.npy
+         validation_indexes.npy
+         testing_indexes.npy
+ 
+      Splits to train, test and validation.
+    """
 
     input_log_csv = os.path.join(input_dir, "driving_log.csv")
     

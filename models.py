@@ -8,6 +8,7 @@ import logging
 import os
 import time
 
+# Adds functionality to work with a dataset
 from datasets import load_dataset
 from keras import backend as K
 from keras import metrics
@@ -33,10 +34,22 @@ class SdcModel(object):
     """ Contains functions to train/evaluate/save models.
     """
     def __init__(self, model_config):
+        """
+        @param model_config - dictionary containing a model configuration.
+        """
         self.model = keras_load_model(model_config['model_uri'])
         self.timesteps = model_config['timesteps']
 
-    def fit(self, dataset, training_args, callbacks=None, final=False):
+    def fit(self, dataset, training_args, callbacks=None):
+        """ This method constructs a training and validation generator
+        and calls keras model fit_generator to train the model.
+
+        @param dataset - See Dataset(datasets.py)
+        @param training_args - Dict containing training params 
+                               (epochs, batch_size, pctl_sampling)
+        @param callbacks - Any keras callbacks to use in the training process (snapshots,
+                           early exit) and so on.
+        """
         batch_size = training_args.get('batch_size', 100)
         epochs = training_args.get('epochs', 5)
         pctl_sampling = training_args.get('pctl_sampling', False)
@@ -53,6 +66,7 @@ class SdcModel(object):
         training_generator = dataset.training_generator(batch_size)
         validation_generator = dataset.validation_generator(batch_size)
         if self.timesteps:
+            # Timesteps for the 3D model.
             training_generator = training_generator.with_timesteps(
                 self.timesteps)
             validation_generator = validation_generator.with_timesteps(
@@ -71,15 +85,25 @@ class SdcModel(object):
             callbacks=(callbacks or []))
 
     def evaluate(self, dataset):
+        """
+        @param dataset - See Dataset(dataset.py)
+        """
         generator = dataset.testing_generator(32)
         if self.timesteps:
             generator = generator.with_timesteps(self.timesteps)
         return std_evaluate(self, generator)
 
     def predict_on_batch(self, batch):
+        """
+        @param batch - batch of input per model configuration.
+        """
         return self.model.predict_on_batch(batch)
 
     def save(self, model_path):
+        """
+        @param model_path - path at which to save the model.
+        @return - dict with a model configuration.
+        """
         save_model(self.model, model_path)
         return {
             'model_uri': model_path
@@ -87,6 +111,11 @@ class SdcModel(object):
 
     @classmethod
     def create(cls, creation_args):
+        """
+        @param creation_args - Dict containing params with which to create a model.
+                               (input_shape, timesteps, model_uri).
+        @return - model configuration dict to be used to construct an SDCModel.
+        """
         # Only support sequential models
         timesteps = creation_args['timesteps']
         img_input = Input(shape=creation_args['input_shape'])
@@ -129,6 +158,11 @@ class SdcModel(object):
 
 def std_evaluate(model, generator):
     """
+    Evaluates a model on the dataset represented by the generator.
+
+    @param model - SDCModel
+    @param generator - generator generating (batch_size, X, y)
+    @return - list of mse, rmse
     """
     size = generator.get_size()
     batch_size = generator.get_batch_size()
@@ -169,6 +203,9 @@ def rmse(y_true, y_pred):
 metrics.rmse = rmse
 
 def train_model(args):
+    """ Trains a model using the specified args.
+    @param args - Dict (model_config, dataset_path, task_id)
+    """
     logger.info('loading model with config %s', args)
 
     model = SdcModel(args['model_config'])
@@ -196,6 +233,9 @@ def train_model(args):
     logger.info('output config: %s' % output_config)
 
 def generate_id():
+    """
+    @return - a task id under which to store a model."
+    """
     return str(int(time.time()))
 
 def main():
