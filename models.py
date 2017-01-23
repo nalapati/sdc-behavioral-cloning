@@ -215,7 +215,7 @@ def train_model(args):
         baseline_mse, np.sqrt(baseline_mse)))
 
     earlystop = EarlyStopping(monitor="val_rmse", patience=12, mode="min")
-    model.fit(dataset, args['training_args'], False, [earlystop])
+    model.fit(dataset, args['training_args'], [earlystop])
     output_model_path = os.path.join(
         args['model_path'], '%s.h5' % args['task_id'])
 
