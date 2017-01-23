@@ -24,7 +24,6 @@ sio = socketio.Server()
 app = Flask(__name__)
 model = None
 prev_image_array = [np.zeros([80, 320, 3], dtype=np.float32) for i in np.arange(10)]
-throttle = 0.2
 
 @sio.on('telemetry')
 def telemetry(sid, data):
@@ -48,6 +47,7 @@ def telemetry(sid, data):
     transformed_image_array = arr[None, :, :, :, :]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.
     steering_angle = float(model.predict(transformed_image_array, batch_size=1))
+    throttle = 0.2
     print(steering_angle, throttle)
     send_control(steering_angle, throttle)
 
