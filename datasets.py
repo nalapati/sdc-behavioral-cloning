@@ -5,6 +5,8 @@ import shutil
 
 import numpy as np
 
+from scipy.stats.mstats import mquantiles
+
 class Dataset(object):
     def __init__(self, 
                  image_path, 
@@ -94,7 +96,8 @@ class InfiniteImageLoadingGenerator(object):
                  batch_size, 
                  shuffle_on_exhaust,
                  timesteps=None,
-                 scale=1.0):
+                 scale=1.0,
+                 pctl_sampling=False):
         self.image_path = image_path
         self.indexes = indexes
         self.labels = labels
@@ -105,12 +108,20 @@ class InfiniteImageLoadingGenerator(object):
         self.current_index = 0
         self.label_shape = [1]
         self.image_shape = list(self.__load_image(image_path, indexes[0]).shape)
+        self.pctl_sampling = pctl_sampling
+        if self.pctl_sampling:
+            these_labels = labels[indexes]
+            pctl_splits = mquantiles(these_labels, np.arange(0.0, 1.01, 0.01))
+            self.pctl_indexes = list(filter(len, [
+                indexes[np.where((these_labels >= lb) & (these_labels < ub))[0]]
+                for lb, ub in zip(pctl_splits[:-1], pctl_splits[1:])]))
 
     def __load_image(self, images_path, index):
         image_path = os.path.join(images_path, "%s.jpg" % index)
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
         image[:, :, 0] = cv2.equalizeHist(image[:, :, 0])
+
         return ((image - (255.0/2))/255.0)
 
     def with_timesteps(self, timesteps):
@@ -129,7 +140,19 @@ class InfiniteImageLoadingGenerator(object):
             self.labels, 
             self.batch_size, 
             self.shuffle_on_exhaust,
+            self.timesteps,
             scale=scale)
+
+    def with_pctl_sampling(self):
+        return InfiniteImageLoadingGenerator(
+            self.image_path, 
+            self.indexes, 
+            self.labels, 
+            self.batch_size, 
+            self.shuffle_on_exhaust,
+            self.timesteps,
+            self.scale,
+            pctl_sampling=True)
 
     def get_image_shape(self):
         return self.image_shape
@@ -163,16 +186,26 @@ class InfiniteImageLoadingGenerator(object):
         else:
             images = np.empty([self.batch_size] + self.image_shape)
 
-        next_indexes = [
-            self.indexes[self.incr_index()]
-            for _ in np.arange(self.batch_size)]
+        if self.pctl_sampling:
+            max_bins = max(self.batch_size, len(self.pctl_indexes))
+            per_bin = max(self.batch_size / max_bins, 1)
+            index_bins = np.random.choice(self.pctl_indexes, max_bins)
+            next_indexes = []
+            for index_bin in index_bins:
+                remaining = self.batch_size - len(next_indexes)
+                for_this_bin = min(remaining, per_bin)
+                next_indexes.extend(np.random.choice(index_bin, for_this_bin))
+        else:
+            next_indexes = [
+                self.indexes[self.incr_index()]
+                for _ in np.arange(self.batch_size)]
 
         for i, next_index in enumerate(next_indexes):
             labels[i] = self.labels[next_index] * self.scale
             if self.timesteps:
                 for step in np.arange(self.timesteps):
                     images[i, self.timesteps - step - 1] = self.__load_image(
-                        self.image_path, max(0, next_index - step))
+                        self.image_path, int(max(0, next_index - step)))
             else:
                 images[i] = self.__load_image(self.image_path, next_index)
 
@@ -223,10 +256,10 @@ def load_dataset(dataset_dir):
         np.load(os.path.join(dataset_dir, "labels.npy")))
 
 if __name__ == "__main__":
-    dataset_name='dataset_9'
+    dataset_name='dataset_32'
     prepare_dataset("../raw_data/" + dataset_name, "../datasets/" + dataset_name, 0.75, 0.15, 0.1)
     dataset = load_dataset("../datasets/" + dataset_name)
-    generator = dataset.training_generator(32)
+    generator = dataset.training_generator(32).with_timesteps(10).with_pctl_sampling()
     print(generator.__next__()[0].shape)
     print(generator.__next__()[1].shape)
 

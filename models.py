@@ -1,17 +1,8 @@
 """Model definitions, construction, testing, validation, training.
 
 NOTE: We used parts of this code as a framework for the Udacity
-      SDC Challenge 2, https://github.com/emef/sdc, I am repurposing
-      the framework in a slightly different way that makes hyper-parameter
-      tuning slightly easier.
- 
-      The idea is to have models created by configuration, and training
-      parameters created by configuration, so you can queue up a bunch of
-      configurations and peek at the stats post training.
-
-      The final form would be using a library like hyperop to control
-      sections of the NN + its parameters to search for the best performing
-      combo.
+      SDC Challenge 2, https://github.com/emef/sdc, however for this
+      project I experimented with 3D convolutional networks.
 """
 import logging
 import os
@@ -39,15 +30,16 @@ import tensorflow as tf
 logger = logging.getLogger(__name__)
 
 class SdcModel(object):
-
+    """ Contains functions to train/evaluate/save models.
+    """
     def __init__(self, model_config):
         self.model = keras_load_model(model_config['model_uri'])
-        self.timesteps = model_config.get('timesteps', 0)
-        self.scale = model_config.get('scale', 1.0)
+        self.timesteps = model_config['timesteps']
 
     def fit(self, dataset, training_args, callbacks=None, final=False):
         batch_size = training_args.get('batch_size', 100)
         epochs = training_args.get('epochs', 5)
+        pctl_sampling = training_args.get('pctl_sampling', False)
         validation_size = training_args.get(
             'validation_size', dataset.validation_generator(
                 batch_size).get_size())
@@ -62,9 +54,12 @@ class SdcModel(object):
         validation_generator = dataset.validation_generator(batch_size)
         if self.timesteps:
             training_generator = training_generator.with_timesteps(
-                self.timesteps).with_scale(self.scale)
+                self.timesteps)
             validation_generator = validation_generator.with_timesteps(
-                self.timesteps).with_scale(self.scale)
+                self.timesteps)
+
+        if pctl_sampling:
+            training_generator = training_generator.with_pctl_sampling()
         
         history = self.model.fit_generator(
             training_generator,
@@ -82,46 +77,35 @@ class SdcModel(object):
         return std_evaluate(self, generator)
 
     def predict_on_batch(self, batch):
-        return self.model.predict_on_batch(batch) / self.scale
+        return self.model.predict_on_batch(batch)
 
     def save(self, model_path):
         save_model(self.model, model_path)
         return {
-            'model_uri': model_path,
-            'timesteps': self.timesteps,
-            'scale': self.scale
+            'model_uri': model_path
         }
 
     @classmethod
     def create(cls, creation_args):
         # Only support sequential models
-        timesteps = creation_args.get('timesteps', 0)
-        scale = creation_args.get('scale', 1.0)
+        timesteps = creation_args['timesteps']
         img_input = Input(shape=creation_args['input_shape'])
 
-        layer = Convolution2D(24, 5, 5, init="he_normal", border_mode="valid")(img_input)
-        layer = Activation("relu")(layer)
-        layer = MaxPooling2D((3, 3))(layer)
-        layer = SpatialDropout2D(0.5)(layer)
-        layer = BatchNormalization(axis=3)(layer)
+        layer = MaxPooling3D((1, 2, 2))(img_input)
+        layer = Convolution3D(60, 5, 5, 5, init="he_normal", activation="relu", border_mode="same")(layer)
+        layer = MaxPooling3D((2, 3, 3))(layer)
+        layer = SpatialDropout3D(0.5)(layer)
+        layer = BatchNormalization(axis=4)(layer)
 
-        layer = Convolution2D(36, 5, 5, init="he_normal", border_mode="valid")(layer)
-        layer = Activation("relu")(layer)
-        layer = MaxPooling2D((3, 3))(layer)
-        layer = SpatialDropout2D(0.5)(layer)
-        layer = BatchNormalization(axis=3)(layer)
-       
-        layer = Convolution2D(48, 3, 3, init="he_normal", border_mode="valid")(layer)
-        layer = Activation("relu")(layer)
-        layer = MaxPooling2D((2, 2))(layer)
-        layer = SpatialDropout2D(0.5)(layer)
-        layer = BatchNormalization(axis=3)(layer)
+        layer = Convolution3D(120, 3, 3, 3, init="he_normal", activation="relu", border_mode="same")(layer)
+        layer = MaxPooling3D((2, 3, 2))(layer)
+        layer = SpatialDropout3D(0.5)(layer)
+        layer = BatchNormalization(axis=4)(layer)
 
-        layer = Convolution2D(64, 3, 3, init="he_normal", border_mode="valid")(layer)
-        layer = Activation("relu")(layer)
-        layer = MaxPooling2D((2, 2))(layer)
-        layer = SpatialDropout2D(0.5)(layer)
-        layer = BatchNormalization(axis=3)(layer)
+        layer = Convolution3D(180, 3, 3, 3, init="he_normal", activation="relu", border_mode="same")(layer)
+        layer = MaxPooling3D((2, 3, 2))(layer)
+        layer = SpatialDropout3D(0.5)(layer)
+        layer = BatchNormalization(axis=4)(layer)
 
         layer = Flatten()(layer)
 
@@ -129,17 +113,9 @@ class SdcModel(object):
         layer = PReLU()(layer)
         layer = Dropout(0.5)(layer)
 
-        layer = Dense(100)(layer)
-        layer = PReLU()(layer)
-        layer = Dropout(0.5)(layer)
+        layer = Dense(1, W_regularizer=l2(0.001))(layer)
 
-        layer = Dense(50)(layer)
-        layer = PReLU()(layer)
-        layer = Dropout(0.5)(layer)
-
-        nn = Dense(1, W_regularizer=l2(0.0001))(layer)
-
-        model = Model(input=img_input, output=nn)
+        model = Model(input=img_input, output=layer)
         model.compile(
             loss='mean_squared_error',
             optimizer='adadelta',
@@ -148,8 +124,7 @@ class SdcModel(object):
         model.save(creation_args['model_uri'])
         return {
             'model_uri': creation_args['model_uri'],
-            'timesteps': timesteps,
-            'scale': scale
+            'timesteps': creation_args['timesteps']
         }
 
 def std_evaluate(model, generator):
@@ -187,8 +162,8 @@ def save_model(model, model_path):
         f.write("\n")
 
 def rmse(y_true, y_pred):
-    '''Calculates RMSE
-    '''
+    """Calculates RMSE
+    """
     return K.sqrt(K.mean(K.square(y_pred - y_true)))
 
 metrics.rmse = rmse
@@ -226,12 +201,12 @@ def generate_id():
 def main():
     logging.basicConfig(level=logging.INFO)
     train_model({
-        "dataset_path": "/home/nalapati/udacity/sdc/udacity-p3/datasets/dataset_4",
+        "dataset_path": "/home/nalapati/udacity/sdc/udacity-p3/datasets/dataset_32",
         "model_path": "/home/nalapati/udacity/sdc/udacity-p3/models",
         "model_config": SdcModel.create({
-            "input_shape": (160, 320, 3),
+            "input_shape": (10, 80, 320, 3),
             "model_uri": "/home/nalapati/models/" + generate_id() + ".h5",
-            "scale": 1.0
+            "timesteps": 10
         }),
         "task_id": str(int(time.time())),
         "training_args": {
