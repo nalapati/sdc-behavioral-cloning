@@ -20,7 +20,7 @@ The 3D convolutional layers in the model allow learning time series information 
 the depth dimension amounts to timesteps or camera images from previous points in time.
 
 The model architecture is as follows:
-![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/model.png)
+![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/model.jpg)
 
 Step 2: Training on the sample data provided
 The first step once the infrastructure was setup was to train the model on the sample data to determine if I could make
