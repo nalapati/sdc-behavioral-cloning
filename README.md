@@ -54,6 +54,8 @@ a core dataset (each with its READMEs to track additions), My final dataset has 
 
 ![alt tag](https://raw.githubusercontent.com/nalapati/sdc-behavioral-cloning/master/images/center_2017_01_19_09_40_46_616.jpg)
 
+The component pieces of data were collected incrementally to fix defects in the algorithm, the sharp turn datacollection run was to fix understeering and dataset imbalance. The bridge section is a wide road even wider than images from track 2 surprisingly, so the car tends to drift to the right (since I only use the bottom half of the image) and then it corrects because of the correction data incorporated into the dataset.
+
 ## Results
 * The model that solves track 1 is in the repo: **(model.json, model.h5)**. Dataset that solves track 1 can be downloaded at: (https://s3-us-west-1.amazonaws.com/sdc-datasets/dataset_track_1.zip) [Needs Permissions]. The final model shows really good track recovery. 
 * I also solved Track 2 in isolation but haven't merged the two datasets yet to make a generalized model. The model that solves Track 2 is in the repo: **(track_2_model/model.json, track_2_model/model.h5)**. Dataset that solves track 2 can be downloaded at: (https://s3-us-west-1.amazonaws.com/sdc-datasets/dataset_track_2.zip) [Needs Permissions]. **NOTE: throttle in drive.py needs to be updated to 0.3 since the track has a lot of uphill sections.**
