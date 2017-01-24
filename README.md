@@ -63,7 +63,7 @@ In order to train the model I used the Dataset in the dataset.py class to load i
 
 BatchNormalization was used between convolutional layers to make convergence faster, it essentially reduces noise between layers by making the data well formed.
 
-The number of epochs was chosen manually around the point where the training stops minimizing the training loss and validation error was converged(Updated the code to include the model checkpointer to pick the best model rather than the manual approach): 
+The number of epochs was chosen manually guarded by the EarlyStopping keras callback that stops the training if the validation rmse has not improved in 12 epochs, there was a bug in the initial version of the code that sets the delta change to 0, changed it to 0.0004. around the point where the training stops minimizing the training loss and validation error was converged(Updated the code to include the model checkpointer to pick the best model rather than the manual approach): 
 ```
 Epoch 34/50
 32384/32372 [==============================] - 250s - loss: 0.0105 - rmse: 0.1006 - val_loss: 0.0098 - val_rmse: 0.0962
