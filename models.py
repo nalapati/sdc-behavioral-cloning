@@ -222,7 +222,7 @@ def train_model(args):
         save_weights_only=False,
         mode='auto',
         period=1)
-    earlystop = EarlyStopping(monitor="val_rmse", patience=12, mode="min")
+    earlystop = EarlyStopping(monitor="val_rmse", min_delta=0.0005, patience=12, mode="min")
     model.fit(dataset, args['training_args'], [earlystop, model_checkpoint])
     output_model_path = os.path.join(
         args['model_path'], '%s.h5' % args['task_id'])
