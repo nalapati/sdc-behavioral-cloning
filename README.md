@@ -29,7 +29,9 @@ end to end and used to drive the car.
 
 ## Step 3: Collecting data
 Once the pipeline was setup end to end the approach was to start collecting data. I drove the car two and fro twice on
-track 1 for the first dataset. (used a keyboard, no steering wheel or joystick).
+track 1 for the first dataset. (used a keyboard, no steering wheel or joystick, I expect a lot better results if I had smoother data,
+I collected steering data by not using long presses on the keys on the sims but short bursts of key presses to better capture
+the angles, this could be the reason for some of the understeering in the sharp turns in track 1 in the result).
 
 ## Step 4: Overfitting the collected data to solve Track 1
 I tuned the model (number of layers, convolutional filters, filter sizes, hidden layer sizes) to come to a solution
