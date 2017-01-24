@@ -12,7 +12,7 @@ import time
 from datasets import load_dataset
 from keras import backend as K
 from keras import metrics
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.engine.topology import Merge
 from keras.layers import (
     Activation, BatchNormalization, Dense, Dropout, Flatten,
@@ -214,8 +214,16 @@ def train_model(args):
     logger.info('baseline mse: %f, baseline rmse: %f' % (
         baseline_mse, np.sqrt(baseline_mse)))
 
+    model_checkpoint = ModelCheckpoint(
+        "weights.{epoch:02d}-{val_loss:.2f}.hdf5",
+        monitor='val_loss',
+        verbose=1,
+        save_best_only=False,
+        save_weights_only=False,
+        mode='auto',
+        period=1)
     earlystop = EarlyStopping(monitor="val_rmse", patience=12, mode="min")
-    model.fit(dataset, args['training_args'], [earlystop])
+    model.fit(dataset, args['training_args'], [earlystop, model_checkpoint])
     output_model_path = os.path.join(
         args['model_path'], '%s.h5' % args['task_id'])
 
