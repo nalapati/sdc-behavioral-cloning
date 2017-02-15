@@ -110,6 +110,7 @@ INFO:__main__:output config: {'model_uri': '/home/nalapati/udacity/sdc/udacity-p
 * I also solved Track 2 in isolation but haven't merged the two datasets yet to make a generalized model. The model that solves Track 2 is in the repo: **(track_2_model/model.json, track_2_model/model.h5)**. Dataset that solves track 2 can be downloaded at: (https://s3-us-west-1.amazonaws.com/sdc-datasets/dataset_track_2.zip) [Needs Permissions]. **NOTE: If you plan on testing track 2, the throttle in drive.py needs to be updated to 0.3 since the track has a lot of uphill sections.**
 
 Youtube Video:
+
 [![Poject Video Output](https://img.youtube.com/vi/YL2jnXwVg98/0.jpg)](https://www.youtube.com/watch?v=YL2jnXwVg98)
 
 ## Running the code.
